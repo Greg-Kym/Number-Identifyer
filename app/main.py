@@ -1,16 +1,18 @@
 import cv2
 import numpy as np
 import torch
+from model_skeleton import CNN_Model
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+model = CNN_Model(input_shape=1, hidden_layers=10, output_shape=10).to(device)
+model.load_state_dict(torch.load('model/MNIST_model.pth'), map_location=device)
+model.eval()
 
 cap = cv2.VideoCapture('https://192.168.0.104:8080/video')
 
 widthImg = 720
 heightImg = 720
-
-model = torch.load('../model/MNIST_model.pth')
-model.eval()
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model.to(device)
 
 
 def preProcessing(img):
