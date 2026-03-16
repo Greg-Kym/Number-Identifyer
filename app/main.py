@@ -6,7 +6,7 @@ from model_skeleton import CNN_Model
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 model = CNN_Model(input_shape=1, hidden_layers=10, output_shape=10).to(device)
-model.load_state_dict(torch.load('model/MNIST_model.pth'), map_location=device)
+model.load_state_dict(torch.load('model/MNIST_model.pth', map_location=device))
 model.eval()
 
 cap = cv2.VideoCapture('https://192.168.0.104:8080/video')
@@ -38,12 +38,14 @@ def getPredictions(img):
     with torch.inference_mode():
         output = model(img)
 
-        softmax = torch.exp(output)
+        softmax = torch.softmax(output, dim=1)
 
-        probability = torch.max(softmax)
-        prediction = torch.argmax(output, dim=1).item()
+        confidence, prediction_tensor = torch.max(softmax, dim=1)
 
-    return prediction, probability.item()
+        prediction = prediction_tensor.item()
+        prob_value = confidence.item()
+
+    return prediction, prob_value
 
 
 def findContours(img):
@@ -53,7 +55,7 @@ def findContours(img):
     for cnt in contours:
         area = cv2.contourArea(cnt)
 
-        if area > 1000:
+        if area > 700:
             x, y, w, h = cv2.boundingRect(cnt)
 
             aspectRatio = float(w) / h
@@ -87,7 +89,7 @@ while cap.isOpened():
     # Find Contours
     findContours(imgPreProcessed)
 
-    # cv2.imshow('Press ESC to exitt', imgPreProcessed)
+    cv2.imshow('Press ESC to exitt', imgPreProcessed)
     cv2.imshow('Press ESC to exit', imgContour)
 
     if cv2.waitKey(1) & 0xFF == 27:
